@@ -71,3 +71,37 @@
 **Decision:** Label as "unknown" and add the two translations in the clean layer.
 **Why:** Dropping products would remove their sales from revenue analysis.
 **Consequences:** The "unknown" category should be mentioned in dashboard notes.
+
+## D008: Restrict trend analysis to Jan 2017 through Aug 2018
+**Date:** 2026-11-04
+**Context:** Orders per month are tiny before 2017-01 and after 2018-08 (single or double digits, with a missing month in 2016).
+**Options considered:**
+1. Delete the sparse months
+2. Keep every row, but limit trend metrics to the 20 reliable months
+**Decision:** Keep every row in the clean layer, and use only 2017-01 to 2018-08 for trends and dashboard charts.
+**Why:** Deleting loses data, while the sparse months would distort growth rates.
+**Consequences:** Dashboards and trend queries need a date filter, which I will define once in a view.
+
+## D009: Use customer_unique_id to identify people
+**Date:** 2026-11-04
+**Context:** There are 99,441 customer_id values but only 96,096 customer_unique_id values. customer_id changes per order.
+**Decision:** Use customer_unique_id for anything about people (repeat purchases, retention). Keep customer_id only as the join key to orders.
+**Why:** Counting customer_id would treat repeat buyers as new customers.
+**Consequences:** Repeat-purchase and cohort queries must group by customer_unique_id.
+
+## D010: Collapse geolocation to one row per zip prefix
+**Date:** 2026-11-04
+**Context:** 1,000,163 rows describe only 19,015 zip prefixes.
+**Options considered:**
+1. Keep all rows
+2. Keep one row per prefix using average latitude and longitude
+**Decision:** One row per prefix with averaged coordinates.
+**Why:** Joining the raw table would multiply rows and inflate order counts.
+**Consequences:** Coordinates are approximate (zip-prefix level), which is fine for regional analysis.
+
+## D011: Flag impossible timestamps instead of deleting rows
+**Date:** 2026-11-04
+**Context:** 166 orders show a carrier hand-off before the purchase time.
+**Decision:** Keep the rows and add a boolean flag `carrier_before_purchase`.
+**Why:** The orders, items, and revenue are still valid, and only the timestamp is wrong.
+**Consequences:** Logistics metrics that use the carrier date should exclude flagged rows.
